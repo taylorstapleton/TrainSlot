@@ -1,0 +1,1811 @@
+<!doctype html>
+<html style="height: 100%; width: 100%;">
+
+<head>
+    <script src="https://pixijs.download/release/pixi.js"></script>
+</head>
+
+<body style="height: 100%; width: 100%; border: none; margin: 0;">
+    <style type="text/css">
+        .bgimg {
+            background-color: #333333;
+            background-image: url('behind.png');
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: 100%;
+            height: 100%;
+            border: none;
+            margin: 0;
+        }
+    </style>
+    <div class="bgimg">
+        
+    </div>
+    <div>
+    <!-- PixiJS must be imported before @pixi/sound -->
+    <script src="https://unpkg.com/pixi.js/dist/browser/pixi.min.js"></script>
+
+    <!-- found here, if not using CDN "./node_modules/@pixi/sound/dist/pixi-sound.js" -->
+    <script src="https://unpkg.com/@pixi/sound/dist/pixi-sound.js"></script>
+
+    <script>
+        // background-size: cover; background-repeat: no-repeat; background-position: 0% 0%;
+        const app = new PIXI.Application(
+            {
+                backgroundColor: 0x222222,
+                backgroundAlpha: .6,
+                antialias: true,
+            }
+        );
+        document.body.appendChild(app.view);
+        app.renderer.view.style.position = 'absolute';
+        app.renderer.view.style.left = '50%';
+        app.renderer.view.style.top = '50%';
+        app.renderer.view.style.transform = 'translate3d( -50%, -50%, 0 )';
+
+//#region asset pre-caching
+        app.loader
+            .add('sample.png', 'sample.png')
+            .add('sample2.png', 'sample2.png')
+            .add('sample3.png', 'sample3.png')
+            .add('sample4.png', 'sample4.png')
+            .add('sample5.png', 'sample5.png')
+            .add('sample6.png', 'sample6.png')
+            .add('sample7.png', 'sample7.png')
+            .add('sample8.png', 'sample8.png')
+            .add('sample9.png', 'sample9.png')
+            .add('sally_2x.png', 'sally_2x.png')
+            .add('outline.png', 'outline.png')
+            .add('midline.png', 'midline.png')
+            .add('bg.png', 'bg.png')
+            .add('bg_balance.png', 'bg_balance.png')
+            .add('behind.png', 'behind.png')
+            .add('traintext.png', 'traintext.png')
+            .add('reel_stop_1.mp3', 'reel_stop_1.mp3')
+            .add('spin.mp3', 'spin.mp3')
+            .add('tease.mp3', 'tease.mp3')
+            .add('minWin.mp3', 'minWin.mp3')
+            .add('smallWin.mp3', 'smallWin.mp3')
+            .add('bigWin.mp3', 'bigWin.mp3')
+            .add('hugeWin.mp3', 'hugeWin.mp3')
+            .add('wildLock.mp3', 'wildLock.mp3')
+            .add('roar.mp3', 'roar.mp3')
+            .add('bang.mp3', 'bang.mp3')
+            .add('balance.mp3', 'balance.mp3')
+            .add('music1.mp3', 'music1.mp3')
+            .add('music2.mp3', 'music2.mp3')
+            .add('coinSound.webm', 'coinSound.webm')
+            .add('continue1.png', 'continue1.png')
+            .add('continue2.png', 'continue2.png')
+            .add('continue3.png', 'continue3.png')
+            .add('vol1.png', 'vol1.png')
+            .add('vol2.png', 'vol2.png')
+            .add('vol3.png', 'vol3.png')
+            .add('vol4.png', 'vol4.png')
+            .add('spin.png', 'spin.png')
+            .add('spin2.png', 'spin2.png')
+            .add('menu1.png', 'menu1.png')
+            .add('menu2.png', 'menu2.png')
+            .add('check1.png', 'check1.png')
+            .add('check2.png', 'check2.png')
+            .add('check3.png', 'check3.png')
+            .add('welcome.png', 'welcome.png')
+            .add('welcome2.png', 'welcome2.png')
+            .add('welcome3.png', 'welcome3.png')
+            .add('depo1.png', 'depo1.png')
+            .add('depo2.png', 'depo2.png')
+            .add('depo3.png', 'depo3.png')
+            .add('info1.png', 'info1.png')
+            .add('info2.png', 'info2.png')
+            .add('info3.png', 'info3.png')
+            .add('hackshit.png', 'hackshit.png')
+            .add('info.png', 'info.png')
+            .add('instructions.png', 'instructions.png')
+            .add('coinsprites.json', 'coinsprites.json')
+            .add('bonusMenu.png', 'bonusMenu.png')
+            .add('bonusWin.png', 'bonusWin.png')
+            .load(onAssetsLoaded);
+//#endregion
+
+        function onAssetsLoaded() {
+
+//#region configuration
+            let testing = false;
+
+            const slotTextures = [
+                PIXI.Texture.from('sample.png'),
+                PIXI.Texture.from('sample2.png'),
+                PIXI.Texture.from('sample3.png'),
+                PIXI.Texture.from('sample4.png'),
+                PIXI.Texture.from('sample5.png'),
+                PIXI.Texture.from('sample6.png'),
+                PIXI.Texture.from('sample7.png'),
+                PIXI.Texture.from('sample8.png'),
+                PIXI.Texture.from('sample9.png'),
+                PIXI.Texture.from('sally_2x.png'),
+            ];
+
+            const reelContents = [
+                19, // J
+                19, // Q
+                19, // K
+                19, // A
+                10, // GGX
+                9,  // KDC
+                8,  // Prod
+                7,  // Train
+                4,  // Bonus
+                4,  // Wild
+            ];
+
+            let betSize = 1000;
+            const pays = [
+                betSize * .02,
+                betSize * .025,
+                betSize * .03,
+                betSize * .035,
+                betSize * .06,
+                betSize * .07,
+                betSize * .08,
+                betSize * .12,
+                0,
+                betSize * .12,
+            ]
+
+            const lines = [
+                [0,0,0,0,0],
+                [1,1,1,1,1],
+                [2,2,2,2,2],
+                [0,1,2,1,0],
+                [2,1,0,1,2]
+            ]
+
+            const lineColors = [
+                0x00ffff,
+                0x00ff00,
+                0x0022ff,
+                0xffff00,
+                0xff00ff
+            ]
+
+            let numSpins = 0;
+            let numBonus = 0;
+            let numHuge = 0;
+            let numRetrig = 0;
+            let balance = 100000;
+            let numAnimRunning = 0;
+            let autoplay = false;
+            let skipScreens = false;
+            const REEL_WIDTH = 160;
+            const SYMBOL_SIZE = 145;
+            const x_margin = 5;
+            const y_margin = (app.screen.height - SYMBOL_SIZE * 3) / 2;
+            const reel_gap = 10;
+//#endregion
+
+//#region sound config
+            const reel_stop_sound = PIXI.sound.Sound.from('reel_stop_1.mp3');
+            const tease = PIXI.sound.Sound.from('tease.mp3');
+            const spin_sound = PIXI.sound.Sound.from('spin.mp3');
+            const min_sound = PIXI.sound.Sound.from('minWin.mp3');
+            const small_sound = PIXI.sound.Sound.from('smallWin.mp3');
+            const big_sound = PIXI.sound.Sound.from('bigWin.mp3');
+            const huge_sound = PIXI.sound.Sound.from('hugeWin.mp3');
+            const coin_sound = PIXI.sound.Sound.from('coinSound.webm');
+            const coin_splash = PIXI.sound.Sound.from('coinSound.webm');
+            const wild_lock = PIXI.sound.Sound.from('wildLock.mp3');
+            const roar = PIXI.sound.Sound.from('roar.mp3');
+            const bang = PIXI.sound.Sound.from('bang.mp3');
+            const balanceSound = PIXI.sound.Sound.from('balance.mp3');
+            const music = PIXI.sound.Sound.from('music1.mp3');
+            const music2 = PIXI.sound.Sound.from('music2.mp3');
+            coin_sound.play({volume: .3, loop: true});
+            music.play({volume: .25, loop: true});
+            music2.play({volume: .3, loop: true});
+            music.volume = 1;
+            music2.volume = 0;
+            coin_sound.volume = 0;
+//#endregion
+
+//#region build reels
+            var bgTexture = new PIXI.Sprite(PIXI.Texture.from('bg.png'));
+            bgTexture.width = REEL_WIDTH * 5 - x_margin;
+            bgTexture.height = SYMBOL_SIZE * 3;
+            bgTexture.y = y_margin;
+            app.stage.addChild(bgTexture);
+
+            const reelPool = [];
+            for (let i = 0; i < reelContents.length; i++) {
+                for (let j = 0; j < reelContents[i]; j++) {
+                    reelPool.push(i);
+                }
+            }
+            const reels = [];
+            const reelContainer = new PIXI.Container();
+
+            for (let i = 0; i < 5; i++) {
+                const rc = new PIXI.Container();
+                rc.x = (i * REEL_WIDTH) + (reel_gap/2) + x_margin/2;
+                reelContainer.addChild(rc);
+
+                const reel = {
+                    container: rc,
+                    symbols: [],
+                    position: 0,
+                    previousPosition: 0,
+                    blur: new PIXI.filters.BlurFilter(),
+                };
+                reel.blur.blurX = 0;
+                reel.blur.blurY = 0;
+                rc.filters = [reel.blur];
+
+                for (let j = 0; j < 4; j++) {
+                    const symbol = new PIXI.Sprite(slotTextures[Math.floor(Math.random() * slotTextures.length)]);
+                    symbol.zOrder = -1000;
+                    symbol.y = j * SYMBOL_SIZE;
+                    symbol.scale.x = symbol.scale.y = Math.min(SYMBOL_SIZE / symbol.width, SYMBOL_SIZE / symbol.height);
+                    symbol.x = Math.round((SYMBOL_SIZE - symbol.width) / 2);
+                    
+                    reel.symbols.push(symbol);
+                    rc.addChild(symbol);
+                }
+                reels.push(reel);
+            }
+            app.stage.addChild(reelContainer);
+
+            reelContainer.y = y_margin;
+            reelContainer.x = Math.round(app.screen.width - REEL_WIDTH * 5) + x_margin;
+            const top = new PIXI.Graphics();
+            top.beginFill(0, 1);
+            top.drawRect(0, 0, app.screen.width, y_margin);
+            const bottom = new PIXI.Graphics();
+            bottom.beginFill(0, .8);
+            bottom.drawRect(0, SYMBOL_SIZE * 3 + y_margin, app.screen.width, y_margin);
+//#endregion
+
+//#region text styles
+            const style = new PIXI.TextStyle({
+                fontFamily: 'Arial',
+                fontSize: 24,
+                fontStyle: 'italic',
+                fill: ['#ffffff'],
+                stroke: '#000000',
+                strokeThickness: 1,
+                dropShadow: true,
+                dropShadowColor: '#000000',
+                dropShadowBlur: 4,
+                dropShadowAngle: Math.PI / 6,
+                dropShadowDistance: 6,
+                wordWrap: false,
+            });
+
+            const banner_style = new PIXI.TextStyle({
+                fontFamily: 'Arial',
+                fontSize: 84,
+                fontWeight: 'bold',
+                fill: ['#88001b', '#000000', '#88001b'],
+                stroke: '#ffffff',
+                strokeThickness: .8,
+                dropShadow: true,
+                dropShadowColor: '#000000',
+                dropShadowBlur: 4,
+                dropShadowAngle: Math.PI / 6,
+                dropShadowDistance: 6,
+                wordWrap: false,
+            });
+
+            const win_style = new PIXI.TextStyle({
+                fontFamily: 'Arial',
+                fontSize: 100,
+                fontWeight: 'bold',
+                fill: ['#ff9103', '#000000', '#ff9103'],
+                stroke: '#ffffff',
+                strokeThickness: 1.5,
+                dropShadow: true,
+                dropShadowColor: '#000000',
+                dropShadowBlur: 4,
+                dropShadowAngle: Math.PI / 6,
+                dropShadowDistance: 6,
+                wordWrap: false,
+            });
+
+            const bet_style = new PIXI.TextStyle({
+                fontFamily: 'Arial',
+                fontSize: 18,
+                fontStyle: 'italic',
+                fill: ['#ffffff'],
+                stroke: '#ffffff',
+                strokeThickness: .5,
+                dropShadow: false,
+            });
+
+            const menu_style = new PIXI.TextStyle({
+                fontFamily: 'Arial',
+                fontSize: 24,
+                fill: ['#ffffff'],
+                stroke: '#ffffff',
+                strokeThickness: .5,
+                dropShadow: false,
+            });
+//#endregion
+
+//#region texture init
+            let balanceText = new PIXI.Text('credit:  $100,000', style);
+            let betText = new PIXI.Text('   bet:  $1000', style);
+
+            var bgBalanceTexture = new PIXI.Sprite(PIXI.Texture.from('bg_balance.png'));
+            bgBalanceTexture.width = Math.round(balanceText.width * 1.1);
+            bgBalanceTexture.height = Math.round(balanceText.height + betText.height);
+            bgBalanceTexture.x = Math.round(bottom.width / 16);
+            bgBalanceTexture.y = app.screen.height - (y_margin * 1.2) + Math.round((y_margin - balanceText.height) / 2);
+
+            var bonusBg = new PIXI.Sprite(PIXI.Texture.from('bg_balance.png'));
+            bonusBg.visible = false;
+            
+            balanceText.x = bgBalanceTexture.x + 10;
+            balanceText.y = bgBalanceTexture.y;
+
+            betText.x = bgBalanceTexture.x + 10;
+            betText.y = balanceText.y + balanceText.height;
+
+            bottom.addChild(bgBalanceTexture);
+            bottom.addChild(bonusBg);
+            bottom.addChild(balanceText);
+            bottom.addChild(betText);
+
+            let winText = new PIXI.Text('', style);
+            bottom.addChild(winText);
+            winText.x = Math.round(bottom.width / 2);
+            winText.y = app.stage.height - y_margin/4;
+            
+            let bonusWinText = new PIXI.Text('', style);
+            bonusWinText.x = Math.round(bottom.width / 2);
+            bonusWinText.y = app.screen.height - y_margin + 2;
+            bottom.addChild(bonusWinText);
+
+            var textTexture = new PIXI.Sprite(PIXI.Texture.from('traintext.png'));
+            textTexture.width = top.width / 1.3;
+            textTexture.height = textTexture.width / 10;
+            textTexture.alpha = .8;
+            textTexture.x = (top.width / 2) - (textTexture.width / 2);
+            textTexture.y = (top.height / 2) - (textTexture.height / 2) - 5;
+            top.addChild(textTexture);
+
+            let bonusSpinsText = new PIXI.Text('', style);
+            bottom.addChild(bonusSpinsText);
+
+            app.stage.addChild(top);
+            app.stage.addChild(bottom);
+
+            for (let i = 0; i < 4; i++){
+                var midlineTexture = new PIXI.Sprite(PIXI.Texture.from('midline.png'));
+                midlineTexture.x = SYMBOL_SIZE + REEL_WIDTH * i + (reel_gap / 2) + x_margin;
+                midlineTexture.y = y_margin;
+                midlineTexture.width = x_margin * 4;
+                midlineTexture.height = SYMBOL_SIZE * 3;
+                app.stage.addChild(midlineTexture);
+            }
+
+            var outlineTexture = new PIXI.Sprite(PIXI.Texture.from('outline.png'));
+            outlineTexture.width = REEL_WIDTH * 5 + x_margin;
+            outlineTexture.height = SYMBOL_SIZE * 3 + 13;
+            outlineTexture.x = 0 - (x_margin / 2);
+            outlineTexture.y = y_margin - 10;
+            app.stage.addChild(outlineTexture);
+
+            var spinTexture = new PIXI.Sprite(PIXI.Texture.from('spin.png'));
+            spinTexture.width = bottom.width / 8;
+            spinTexture.height = bottom.width / 8;
+            spinTexture.alpha = .9;
+            spinTexture.x = (bottom.width) - (bottom.width / 6);
+            spinTexture.y = app.screen.height - y_margin * 1.4;
+
+            spinTexture.interactive = true;
+            spinTexture.buttonMode = true;
+            spinTexture.addListener('pointerdown', () => {
+                startPlay();
+            });
+            spinTexture.addListener('mouseover', () => {
+                spinTexture.texture = PIXI.Texture.from('spin2.png');
+            });
+            spinTexture.addListener('mouseout', () => {
+                spinTexture.texture = PIXI.Texture.from('spin.png');
+            });
+            app.stage.addChild(spinTexture);
+
+            let lineGraphics = new PIXI.Graphics();
+            app.stage.addChild(lineGraphics);
+            lineGraphics.position.set(x_margin, y_margin);
+//#endregion
+
+//#region coin stuff
+            let coinSheet = app.loader.resources["coinsprites.json"];
+            const frames = [];
+            let coins = [];
+
+            for (let i = 1; i < 19; i++) {
+                frames.push(PIXI.Texture.from(`coin${i}.png`));
+            }
+
+            const coinsprites = new PIXI.ParticleContainer(100, {
+                scale: true,
+                position: true,
+                rotation: true,
+                uvs: true,
+                alpha: true,
+            });
+            coinsprites.x = 0;
+            coinsprites.y = 0;
+            app.stage.addChild(coinsprites);
+
+            for (let i = 0; i < 100; i++) {
+                let cointest = new PIXI.AnimatedSprite(frames);
+                cointest.scale.set(0.2 + Math.random() * 0.2);
+                cointest.x = Math.random() * (app.screen.width - cointest.width*2) + (cointest.width);
+                cointest.y = app.screen.height + 200;
+                cointest.animationSpeed = .5 + (Math.random() * .3);
+                cointest.rotation = Math.random() * 45;
+                cointest.play();
+                coinsprites.addChild(cointest);
+                coins.push(cointest);
+            }
+            coinsprites.visible = false;
+
+            coinsAnimating = 0;
+
+            function coinFinished() {
+                coinsAnimating--;
+                if (numAnimRunning == 0 && coinsAnimating == 0 && soundTracker.playingHuge == 0) {
+                    running = false;
+                }
+                if (coinsAnimating == 0) {
+                    coinsprites.visible = false;
+                }
+                if (autoplay) {
+                    startPlay();
+                }
+            }
+
+            function coinSplash(base_time) {
+                coinsprites.visible = true;
+                for (let i = 0; i < coins.length; i++) {
+                    let rand = Math.random();
+                    let time = rand * base_time;
+                    let dist = rand * app.screen.height;
+                    coinsAnimating++;
+                    coins[i].y = app.screen.height + 200;
+                    tweenTo(coins[i], 'y', app.screen.height + (100 * rand) + 150, time,
+                        backout(-dist / 5), null, coinFinished);
+                }
+            }
+
+            function rescheduleRain(coin) {
+                if (soundTracker.playingHuge == 0) {
+                    return;
+                }
+                let rand = Math.random();
+                let time = rand * 2500;
+                tweenTo(coin, 'volume', 0, time, backout(0), null, () => { rainSingleCoin(coin, 10) });
+
+            }
+
+            function rainSingleCoin(coin) {
+                coin.y = -100;
+                tweenTo(coin, 'y', app.screen.height + 400, 2500,
+                        backout(0), null, () => {rescheduleRain(coin)});
+            }
+
+            function coinRain() {
+                coinsprites.visible = true;
+                for (let i = 0; i < coins.length; i++) {
+                    rescheduleRain(coins[i]);
+                }
+            }
+//#endregion
+
+//#region big win counter
+
+            const winCountNum = {
+                val: 0,
+            };
+            let winCountText = new PIXI.Text(formatMoney(winCountNum.val), win_style);
+            let juiceText = new PIXI.Text("Juicer McGooser", win_style);
+            juiceText.scale.x = .9;
+            juiceText.scale.y = .9;
+            juiceText.x = (app.stage.width / 2) - (juiceText.width / 2);
+            juiceText.y = (app.stage.height / 2) - juiceText.height - 120;
+
+
+            function updateWinCountText() {
+                winCountText.text = formatMoney(winCountNum.val);
+                winCountText.x = (app.stage.width / 2) - (winCountText.width / 2);
+                winCountText.y = (app.stage.height / 2) - winCountText.height;
+            }
+
+            function finishWinCount() {
+                playBang();
+                juiceText.visible = true;
+                time = 2500;
+                tweenTo(winCountText.scale, "x", 1.05, time, backout(5), null, endWinCount);
+                tweenTo(winCountText.scale, "y", 1.09, time, backout(5), null, null);
+
+                tweenTo(winCountText, "x", winCountText.x * .95, time, backout(5), null, null);
+                tweenTo(winCountText, "y", winCountText.y * .96, time, backout(5), null, null);
+
+                tweenTo(juiceText.scale, "y", 1.05, time, backout(5), null, null);
+                tweenTo(juiceText, "y", juiceText.y * .96, time, backout(13), null, null);
+            }
+
+            function endWinCount() {
+                winCountText.visible = false;
+                juiceText.visible = false;
+                winCountText.scale.x = 1;
+                winCountText.scale.y = 1;
+                winCountText.scale.x = .9;
+                winCountText.scale.y = .9;
+                juiceText.x = (app.stage.width / 2) - (juiceText.width / 2);
+                juiceText.y = (app.stage.height / 2) - 220;
+                winCountText.x = (app.stage.width / 2) - (winCountText.width / 2);
+                winCountText.y = (app.stage.height / 2) - winCountText.height;
+                winCountNum.val = 0;
+            }
+
+            function displayBigWinCount(amount, time) {
+                winCountText.visible = true;
+                tweenTo(winCountNum, "val", amount, time, backout(0), updateWinCountText, finishWinCount);
+            }
+
+            winCountText.visible = false;
+            juiceText.visible = false;
+            app.stage.addChild(winCountText);
+            app.stage.addChild(juiceText);
+
+//#endregion
+
+//#region welcome dialogue
+            let welcomeWidth = 700;
+            let welcomeHeight = 500;
+            const welcomeContainer = new PIXI.Container();
+            welcomeContainer.position.x = (app.stage.width / 2) - (welcomeWidth / 2);
+            welcomeContainer.position.y = (app.stage.height / 2) - (welcomeHeight / 2);
+            var welcomeGraphics = new PIXI.Graphics();
+            welcomeGraphics.beginFill(0x3e494b, .95);
+            welcomeGraphics.lineStyle(4, 0x0, .9);
+            
+            welcomeGraphics.drawRoundedRect(
+                0,
+                0,
+                welcomeWidth,
+                welcomeHeight,
+                30
+            );
+            welcomeGraphics.endFill();
+            welcomeContainer.visible = true;
+            welcomeContainer.addChild(welcomeGraphics);
+            app.stage.addChild(welcomeContainer);
+            
+            function closeWelcomeDialogue() {
+                welcomeContainer.visible = false;
+                autoTexture.visible = true;
+                spinTexture.visible = true;
+            }
+
+            var logo = new PIXI.Sprite(PIXI.Texture.from('hackshit.png'));
+            logo.width = logo.width / 3;
+            logo.height = logo.height / 3;
+            logo.x = (welcomeWidth / 2) - (logo.width / 2);
+            logo.y = 10;
+            welcomeContainer.addChild(logo);
+
+            var instructions = new PIXI.Sprite(PIXI.Texture.from('instructions.png'));
+            instructions.width = (instructions.width / 5) * 3;
+            instructions.height = (instructions.height / 5) * 3;
+            instructions.x = (welcomeWidth / 2) - (instructions.width / 2);
+            instructions.y = (welcomeHeight / 5) * 1;
+            welcomeContainer.addChild(instructions);
+
+            var welcomeButton = new PIXI.Sprite(PIXI.Texture.from('welcome.png'));
+            welcomeButton.width = (welcomeWidth / 5) * 2;
+            welcomeButton.height = .177 * welcomeButton.width;
+            welcomeButton.alpha = 1;
+            welcomeButton.x = (welcomeWidth / 2) - (welcomeButton.width / 2)
+            welcomeButton.y = (welcomeHeight / 6) * 5;
+
+            welcomeButton.interactive = true;
+            welcomeButton.buttonMode = true;
+            welcomeButton.addListener('pointerdown', () => {
+                welcomeButton.texture = PIXI.Texture.from('welcome3.png');
+                playSpinSound();    
+            });
+            welcomeButton.addListener('pointerup', () => {
+                welcomeButton.texture = PIXI.Texture.from('welcome2.png');
+                closeWelcomeDialogue();
+            });
+            welcomeButton.addListener('mouseover', () => {
+                welcomeButton.texture = PIXI.Texture.from('welcome2.png');    
+            });
+            welcomeButton.addListener('mouseout', () => {
+                welcomeButton.texture = PIXI.Texture.from('welcome.png');    
+            });
+            welcomeContainer.addChild(welcomeButton);
+
+            let welcomeText = new PIXI.Text('Welcome', banner_style);
+            welcomeText.x = welcomeContainer.width / 2 - welcomeText.width / 2;
+            welcomeText.y = welcomeButton.y - 300;
+
+//#endregion
+
+//#region info dialogue
+            let infoWidth = 450;
+            let infoHeight = infoWidth * .811;
+            const infoContainer = new PIXI.Container();
+            infoContainer.position.x = (app.stage.width / 2) - (infoWidth / 2);
+            infoContainer.position.y = (app.stage.height / 2) - (infoHeight / 2);
+            
+            var infoPane = new PIXI.Sprite(PIXI.Texture.from('info.png'));
+            infoPane.width = infoWidth;
+            infoPane.height = infoHeight;
+
+            infoContainer.visible = false;
+            infoContainer.addChild(infoPane);
+            app.stage.addChild(infoContainer);
+            
+            function closeinfoDialogue() {
+                infoContainer.visible = false;
+                autoTexture.visible = true;
+                spinTexture.visible = true;
+            }
+
+            var infoPaneButton = new PIXI.Sprite(PIXI.Texture.from('continue1.png'));
+            infoPaneButton.width = (infoWidth / 5) * 2;
+            infoPaneButton.height = .177 * infoPaneButton.width;
+            infoPaneButton.x = (infoWidth / 2) - (infoPaneButton.width / 2)
+            infoPaneButton.y = (infoHeight / 100) * 86;
+
+            // Set the interactivity.
+            infoPaneButton.interactive = true;
+            infoPaneButton.buttonMode = true;
+            infoPaneButton.addListener('pointerdown', () => {
+                infoPaneButton.texture = PIXI.Texture.from('continue3.png');
+                playSpinSound();    
+            });
+            infoPaneButton.addListener('pointerup', () => {
+                infoPaneButton.texture = PIXI.Texture.from('continue2.png');
+                closeinfoDialogue();
+            });
+            infoPaneButton.addListener('mouseover', () => {
+                infoPaneButton.texture = PIXI.Texture.from('continue2.png');    
+            });
+            infoPaneButton.addListener('mouseout', () => {
+                infoPaneButton.texture = PIXI.Texture.from('continue1.png');    
+            });
+            infoContainer.addChild(infoPaneButton);
+//#endregion
+
+//#region auto button
+            var autoTexture = new PIXI.Sprite(PIXI.Texture.from('auto1.png'));
+            autoTexture.width = bottom.width / 6;
+            autoTexture.height = .177 * autoTexture.width;
+            autoTexture.alpha = .8;
+            autoTexture.x = (bottom.width) - (bottom.width / 6) - (autoTexture.width - spinTexture.width) / 2;
+            autoTexture.y = app.screen.height - autoTexture.height;
+
+            // Set the interactivity.
+            autoTexture.interactive = true;
+            autoTexture.buttonMode = true;
+            autoTexture.addListener('pointerdown', () => {
+                
+                autoplay = !autoplay;
+                if (autoplay) {
+                    spinTexture.alpha = .5;
+                } else {
+                    spinTexture.alpha = .9;
+                }
+                if(!running) {
+                    startPlay();
+                }
+            });
+            autoTexture.addListener('mouseover', () => {
+                if (autoplay) {
+                    autoTexture.texture = PIXI.Texture.from('auto4.png');    
+                } else {
+                    autoTexture.texture = PIXI.Texture.from('auto2.png');
+                }
+            });
+            autoTexture.addListener('mouseout', () => {
+                if (autoplay) {
+                    autoTexture.texture = PIXI.Texture.from('auto3.png');    
+                } else {
+                    autoTexture.texture = PIXI.Texture.from('auto1.png');
+                }
+            });
+            app.stage.addChild(autoTexture);
+            autoTexture.visible = false;
+            spinTexture.visible = false;
+//#endregion
+
+//#region mute button
+            let soundEnabled = true;
+            var muteTexture = new PIXI.Sprite(PIXI.Texture.from('vol1.png'));
+            muteTexture.width = bottom.width / 32;
+            muteTexture.height = muteTexture.width;
+            muteTexture.alpha = 1;
+            muteTexture.x = bottom.x + 11;
+            muteTexture.y = app.screen.height - muteTexture.height - 12;
+
+            // Set the interactivity.
+            muteTexture.interactive = true;
+            muteTexture.buttonMode = true;
+
+            function mutePressed() {
+                soundEnabled = !soundEnabled;
+                if (soundEnabled) {
+                    if (musicEnabled) {
+                        if (bonusSpins > 0 || lastSpin) {
+                            music2.volume = 1;
+                        } else {
+                            music.volume = 1;
+                        }
+                    }
+                    muteTexture.texture = PIXI.Texture.from('vol3.png');
+                } else {
+                    music.volume = 0;
+                    music2.volume = 0;
+                    muteTexture.texture = PIXI.Texture.from('vol4.png');
+                }
+            }
+            muteTexture.addListener('pointerdown', () => {
+                mutePressed();
+            });
+            muteTexture.addListener('mouseover', () => {
+                if (soundEnabled) {
+                    muteTexture.texture = PIXI.Texture.from('vol2.png');   
+                } else {
+                    muteTexture.texture = PIXI.Texture.from('vol3.png');
+                }
+            });
+            muteTexture.addListener('mouseout', () => {
+                if (soundEnabled) {
+                    muteTexture.texture = PIXI.Texture.from('vol1.png');    
+                } else {
+                    muteTexture.texture = PIXI.Texture.from('vol4.png');
+                }
+            });
+            app.stage.addChild(muteTexture);
+//#endregion
+
+//#region menu button
+            let menuOpen = false;
+
+            function openMenu() {
+                menuOpen = true;
+                menuContainer.visible = true;
+                return;
+            }
+
+            function closeMenu() {
+                menuOpen = false;
+                menuContainer.visible = false;
+                return;
+            }
+
+            var menuButtonTexture = new PIXI.Sprite(PIXI.Texture.from('menu1.png'));
+            menuButtonTexture.width = bottom.width / 32;
+            menuButtonTexture.height = menuButtonTexture.width;
+            menuButtonTexture.alpha = 1;
+            menuButtonTexture.x = bottom.x + 9;
+            menuButtonTexture.y = app.screen.height - y_margin + 12;
+
+            // Set the interactivity.
+            menuButtonTexture.interactive = true;
+            menuButtonTexture.buttonMode = true;
+            menuButtonTexture.addListener('pointerdown', () => {
+                if (!menuOpen) {
+                    openMenu();
+                } else {
+                    closeMenu();
+                }
+            });
+            menuButtonTexture.addListener('mouseover', () => {
+                menuButtonTexture.texture = PIXI.Texture.from('menu2.png');    
+            });
+            menuButtonTexture.addListener('mouseout', () => {
+                menuButtonTexture.texture = PIXI.Texture.from('menu1.png');    
+            });
+            app.stage.addChild(menuButtonTexture);
+
+            const menuContainer = new PIXI.Container();
+            let menuHeight = 300;
+            let menuWidth = 250;
+            var menuGraphics = new PIXI.Graphics();
+            menuGraphics.beginFill(0x3e494b, .95);
+            menuGraphics.lineStyle(4, 0x0, .3);
+            menuGraphics.drawRoundedRect(
+                menuButtonTexture.x,
+                menuButtonTexture.y - menuHeight,
+                menuWidth,
+                menuHeight,
+                30
+            );
+            menuGraphics.endFill();
+            menuContainer.visible = false;
+            menuContainer.addChild(menuGraphics);
+            app.stage.addChild(menuContainer);
+//#endregion
+
+//#region fast spin button
+            var fastSpinButton = new PIXI.Sprite(PIXI.Texture.from('check1.png'));
+            fastSpinButton.width = 26;
+            fastSpinButton.height = fastSpinButton.width;
+            fastSpinButton.alpha = 1;
+            fastSpinButton.x = menuContainer.x + 205;
+            fastSpinButton.y = menuContainer.y + 470;
+
+            // Set the interactivity.
+            fastSpinButton.interactive = true;
+            fastSpinButton.buttonMode = true;
+            fastSpinButton.addListener('pointerdown', () => {
+                if (fastSpin) {
+                    fastSpin = false;
+                    fastSpinButton.texture = PIXI.Texture.from('check1.png')
+                } else {
+                    fastSpin = true;
+                    fastSpinButton.texture = PIXI.Texture.from('check3.png')
+                }
+            });
+            fastSpinButton.addListener('mouseover', () => {
+                fastSpinButton.texture = PIXI.Texture.from('check2.png');    
+            });
+            fastSpinButton.addListener('mouseout', () => {
+                if (fastSpin) {
+                    fastSpinButton.texture = PIXI.Texture.from('check3.png')
+                } else {
+                    fastSpinButton.texture = PIXI.Texture.from('check1.png')
+                }
+            });
+            menuContainer.addChild(fastSpinButton);
+
+            let fastSpinText = new PIXI.Text('Fast Spin', menu_style);
+            fastSpinText.x = fastSpinButton.x - fastSpinText.width - 10;
+            fastSpinText.y = fastSpinButton.y + 1;
+            menuContainer.addChild(fastSpinText);
+//#endregion
+
+//#region skip screens button
+            
+            var skipScreensButton = new PIXI.Sprite(PIXI.Texture.from('check1.png'));
+            skipScreensButton.width = 26;
+            skipScreensButton.height = skipScreensButton.width;
+            skipScreensButton.alpha = 1;
+            skipScreensButton.x = menuContainer.x + 205;
+            skipScreensButton.y = menuContainer.y + 420;
+
+            // Set the interactivity.
+            skipScreensButton.interactive = true;
+            skipScreensButton.buttonMode = true;
+            skipScreensButton.addListener('pointerdown', () => {
+                if (skipScreens) {
+                    skipScreens = false;
+                    skipScreensButton.texture = PIXI.Texture.from('check1.png')
+                } else {
+                    skipScreens = true;
+                    skipScreensButton.texture = PIXI.Texture.from('check3.png')
+                }
+            });
+            skipScreensButton.addListener('mouseover', () => {
+                skipScreensButton.texture = PIXI.Texture.from('check2.png');    
+            });
+            skipScreensButton.addListener('mouseout', () => {
+                if (skipScreens) {
+                    skipScreensButton.texture = PIXI.Texture.from('check3.png')
+                } else {
+                    skipScreensButton.texture = PIXI.Texture.from('check1.png')
+                }
+            });
+            menuContainer.addChild(skipScreensButton);
+
+            let skipScreensText = new PIXI.Text('Skip Screens', menu_style);
+            skipScreensText.x = skipScreensButton.x - skipScreensText.width - 10;
+            skipScreensText.y = skipScreensButton.y + 1;
+            menuContainer.addChild(skipScreensText);
+
+//#endregion
+
+//#region mute music button
+            
+            let musicEnabled = true;
+            var muteMusicButton = new PIXI.Sprite(PIXI.Texture.from('check3.png'));
+            muteMusicButton.width = 26;
+            muteMusicButton.height = muteMusicButton.width;
+            muteMusicButton.alpha = 1;
+            muteMusicButton.x = menuContainer.x + 205;
+            muteMusicButton.y = menuContainer.y + 370;
+
+            muteMusicButton.interactive = true;
+            muteMusicButton.buttonMode = true;
+            muteMusicButton.addListener('pointerdown', () => {
+                if (musicEnabled) {
+                    music.volume = 0;
+                    music2.volume = 0;
+                    musicEnabled = false;
+                    muteMusicButton.texture = PIXI.Texture.from('check1.png')
+                } else {
+                    if (soundEnabled) {
+                        if (bonusSpins > 0 || lastSpin) {
+                            music2.volume = 1;
+                        } else {
+                            music.volume = 1;
+                        }
+                    }
+                    musicEnabled = true;
+                    muteMusicButton.texture = PIXI.Texture.from('check3.png')
+                }
+            });
+            muteMusicButton.addListener('mouseover', () => {
+                muteMusicButton.texture = PIXI.Texture.from('check2.png');    
+            });
+            muteMusicButton.addListener('mouseout', () => {
+                if (musicEnabled) {
+                    muteMusicButton.texture = PIXI.Texture.from('check3.png')
+                } else {
+                    muteMusicButton.texture = PIXI.Texture.from('check1.png')
+                }
+            });
+            menuContainer.addChild(muteMusicButton);
+
+            let musicEnabledText = new PIXI.Text('Enable Music', menu_style);
+            musicEnabledText.x = muteMusicButton.x - musicEnabledText.width - 10;
+            musicEnabledText.y = muteMusicButton.y + 1;
+            menuContainer.addChild(musicEnabledText);
+
+//#endregion
+
+//#region depo button
+            var depoButton = new PIXI.Sprite(PIXI.Texture.from('depo1.png'));
+            depoButton.width = 200;
+            depoButton.height = .177 * depoButton.width;
+            depoButton.alpha = 1;
+            depoButton.x = menuContainer.width/2 - depoButton.width/2 + 5;
+            depoButton.y = menuContainer.y + 250;
+
+            // Set the interactivity.
+            depoButton.interactive = true;
+            depoButton.buttonMode = true;
+            depoButton.addListener('pointerdown', () => {
+                depoButton.texture = PIXI.Texture.from('depo3.png')
+                balance += 100000
+                playSplash();
+                updateBalance();
+            });
+            depoButton.addListener('pointerup', () => {
+                depoButton.texture = PIXI.Texture.from('depo2.png')
+            });
+            depoButton.addListener('mouseover', () => {
+                depoButton.texture = PIXI.Texture.from('depo2.png');    
+            });
+            depoButton.addListener('mouseout', () => {
+                depoButton.texture = PIXI.Texture.from('depo1.png')
+            });
+            menuContainer.addChild(depoButton);
+//#endregion
+
+//#region info button
+            var infoButton = new PIXI.Sprite(PIXI.Texture.from('info1.png'));
+            infoButton.width = 200;
+            infoButton.height = .177 * infoButton.width;
+            infoButton.alpha = 1;
+            infoButton.x = menuContainer.x + menuContainer.width/2 - infoButton.width/2 + 5;
+            infoButton.y = menuContainer.y + 300;
+
+            infoButton.interactive = true;
+            infoButton.buttonMode = true;
+            infoButton.addListener('pointerdown', () => {
+                infoButton.texture = PIXI.Texture.from('info3.png')
+                closeMenu();
+                infoContainer.visible = true;
+            });
+            infoButton.addListener('pointerup', () => {
+                infoButton.texture = PIXI.Texture.from('info1.png')
+            });
+            infoButton.addListener('mouseover', () => {
+                infoButton.texture = PIXI.Texture.from('info2.png');    
+            });
+            infoButton.addListener('mouseout', () => {
+                infoButton.texture = PIXI.Texture.from('info1.png')
+            });
+            menuContainer.addChild(infoButton);
+//#endregion
+
+//#region startPlay
+            let running = false;
+            let fastSpin = false;
+            let lastSpin = false;
+
+            function tweenReel(r, cur, time) {
+                bonusCount = 0;
+                for (let i = 0; i < cur; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (currentSymbols[i][j] == 8 && !wildLocations.includes(i.toString() + j.toString())) {
+                            bonusCount++;
+                        }
+                    }
+                }
+                var target = Math.round(r.position + 1);
+                var back = 1.0;
+                if(bonusCount >= 2) {
+                    playTease();
+                    target = Math.round(r.position + (10*cur));
+                    time = time * (5 * cur);
+                    back -= (.2 * cur);
+                }
+                tweenTo(r, 'position', target, time, backout(back), null, cur === reels.length - 1 ? reelsComplete : playReelComplete);
+            }
+
+            const spinning = {
+                reel0: 0,
+                reel1: 0,
+                reel2: 0,
+                reel3: 0,
+                reel4: 0,
+            };
+
+            function startPlay() {
+                if (running) return;
+                if (balance < betSize) {
+                    playBalance();
+                    return;
+                }
+                running = true;
+                numSpins++;
+                console.log("num_spins = " + numSpins + " balance = " + balance + " num_bonus = " + numBonus +
+                    " num_huge = " + numHuge + " num_retrig = " + numRetrig);
+
+                if(soundEnabled) {
+                    playSpinSound();
+                }
+
+                if (bonusSpins == 1) {
+                    lastSpin = true;
+                }
+
+                if (bonusSpins == 0) {
+                    balance -= betSize;
+                    updateBalance();
+                    clearStickySymbols();
+                    bonusSpinsText.text = "";
+                } else {
+                    bonusSpins--;
+                    updateBonusSpins();
+                }
+
+                lineGraphics.clear()
+                winText.text = "";
+
+                for (let i = 0; i < reels.length; i++) {
+                    const r = reels[i];
+
+                    var time = 200;
+                    var base = 800;
+                    if(bonusSpins > 0 || lastSpin) {
+                        time = 400;
+                        base = 1200;
+                    }
+                    if (fastSpin) {
+                        time = 150;
+                        base = 400;
+                    }
+                    if (testing) {
+                        time = 50;
+                        base = 110;
+                    }
+                    spinning.reel0 = 100;
+                    spinning.reel1 = 100;
+                    spinning.reel2 = 100;
+                    spinning.reel3 = 100;
+                    spinning.reel4 = 100;
+                    tweenTo(spinning, 'reel' + i, 0, base + (i * time), backout(0), null, () => {tweenReel(r, i, time)});
+                    
+                }
+            }
+//#endregion            
+
+//#region sound methods
+            function playReelComplete() {
+                if(soundEnabled) {
+                  reel_stop_sound.play({volume: 0.2});
+                }
+            }
+            function playRoar() {
+                if(soundEnabled) {
+                  roar.play({volume: .5});
+                }
+            }
+            function playBang() {
+                if(soundEnabled) {
+                  bang.play({volume: .5});
+                }
+            }
+            function playBalance() {
+                if(soundEnabled) {
+                    balanceSound.play({volume: .5});
+                }
+            }
+            function playTease() {
+                if(soundEnabled) {
+                  tease.play({volume: 0.3});
+                }
+            }
+            function stopTease() {
+                if(soundEnabled) {
+                  tease.stop();
+                }
+            }
+            function playMin() {
+                if (soundEnabled) {
+                    min_sound.play({volume: 0.45});
+                }
+            }
+            function playSmall() {
+                if (soundEnabled) {
+                    small_sound.play({volume: 0.5});
+                }
+            }
+            function playBig() {
+                if (soundEnabled) {
+                    big_sound.play({volume: 0.55});
+                }
+            }
+            function playSplash() {
+                if (soundEnabled) {
+                    coin_splash.play({volume: 0.55, speed: 2});
+                }
+            }
+            function playWild() {
+                if (soundEnabled && !wild_lock.isPlaying) {
+                    wild_lock.play({volume: 0.2});
+                }
+            }
+            function duckMusic() {
+                if (soundEnabled && musicEnabled) {
+                    if (bonusSpins > 0 || lastSpin) {
+                        tweenTo(music2, "volume", .1, 1000, backout(0), null, null);
+                    } else {
+                        tweenTo(music, "volume", .1, 1000, backout(0), null, null);
+                    }
+                }
+            }
+            function unDuckMusic() {
+                coin_sound.volume = 0;
+                if (soundEnabled && musicEnabled) {
+                    if (bonusSpins > 0 || lastSpin) {
+                        tweenTo(music2, "volume", 1, 1000, backout(0), null, null);
+                    } else {
+                        tweenTo(music, "volume", 1, 1000, backout(0), null, null);
+                    }
+                }
+                running = false;
+                if (autoplay) {
+                    startPlay();
+                }
+            }
+            
+            const soundTracker = {
+                playingHuge: 0,
+            };
+            function playHuge() {
+                console.log("huge sound");
+                if (soundEnabled) {
+                    coin_sound.volume = 1;
+                    huge_sound.play({volume: 0.6});
+                    soundTracker.playingHuge = 100;
+                    duckMusic();
+                    tweenTo(soundTracker, 'playingHuge', 0, 15000, backout(0), null, unDuckMusic);
+                }
+            }
+            function playSpinSound() {
+                if (soundEnabled) {
+                    spin_sound.play({volume: 0.6});
+                }
+            }
+//#endregion
+
+//#region text updaters
+            function formatMoney(text) {
+                var formatter = new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    
+                });
+                return formatter.format(text).split('.')[0];
+            }
+
+            function updateBalance() {
+                balanceText.text = "credit:  " + formatMoney(balance);
+                bgBalanceTexture.width = Math.round(balanceText.width * 1.1);
+            }
+
+            function updateBonusSpins() {
+                bonusSpinsText.text = "Free Spins: " + bonusSpins;
+                bonusSpinsText.x = bonusBg.x + (bonusBg.width/2) - (bonusSpinsText.width/2);
+                bonusSpinsText.y = bonusWinText.y + bonusWinText.height;
+            }
+
+            function updateBonusWinText() {
+                bonusBg.visible = true;
+                bonusWinText.text = "Bonus Win: " + formatMoney(bonusWin);
+                bonusBg.width = Math.round(bonusWinText.width * 1.1);
+                bonusBg.height = bgBalanceTexture.height;
+                bonusBg.x = Math.round(bottom.width - bonusBg.width - Math.round(bottom.width / 16));
+                bonusWinText.x = Math.round(bonusBg.x + (bonusBg.width/2) - (bonusWinText.width/2));
+                bonusBg.y = bgBalanceTexture.y;
+                bonusWinText.y = bonusBg.y;
+            }
+//#endregion
+
+//#region bonus dialogue
+            let bonusSpins = 0;
+            const bonusDialContainer = new PIXI.Container();
+            let bonusDialWidth = 600;
+            let bonusDialHeight = bonusDialWidth * .81;
+            bonusDialContainer.position.x = (app.stage.width / 2) - (bonusDialWidth / 2);
+            bonusDialContainer.position.y = (app.stage.height / 2) - (bonusDialHeight / 2);
+            var bonusMenu = new PIXI.Sprite(PIXI.Texture.from('bonusMenu.png'));
+            bonusMenu.width = bonusDialWidth;
+            bonusMenu.height = bonusDialHeight;
+            bonusDialContainer.addChild(bonusMenu);
+            let spinText = new PIXI.Text('12', banner_style);
+            spinText.x = (bonusMenu.width/2) - (spinText.width/2);
+            spinText.y = (bonusMenu.height/2) - (spinText.height/2) + 10;
+            bonusDialContainer.addChild(spinText);
+            bonusDialContainer.alpha = .99;
+            app.stage.addChild(bonusDialContainer);
+            bonusDialContainer.visible = false;
+            
+            function openBonusDialogue(spinsWon) {
+                playRoar();
+                autoplay = false;
+                spinText.text = spinsWon;
+                spinText.x = (bonusMenu.width/2) - (spinText.width/2);
+                spinText.y = (bonusMenu.height/2) - (spinText.height/2) + 8;
+                bonusDialContainer.visible = true;
+                autoTexture.visible = false;
+                spinTexture.visible = false;
+                updateBonusWinText();
+                bonusDialContainer.alpha = 0;
+                updateBonusSpins();
+                if (musicEnabled && soundEnabled) {
+                    tweenTo(music, "volume", 0, 4000, backout(0), null, null);
+                    tweenTo(music2, "volume", 1, 4000, backout(0), null, null);
+                }
+                if (skipScreens) {
+                    tweenTo(bonusDialContainer, 'alpha', .99, 1500, backout(0), null, closeBonusDialogue);
+                } else {
+                    tweenTo(bonusDialContainer, 'alpha', .99, 1500, backout(0), null, null);
+                }
+            }
+            
+            function closeBonusDialogue() {
+                if (bonusDialContainer.visible) {
+                    bonusDialContainer.visible = false;
+                    autoplay = true;
+                    startPlay();
+                }
+            }
+
+            var bonusButtonTexture = new PIXI.Sprite(PIXI.Texture.from('continue1.png'));
+            bonusButtonTexture.width = (bonusDialWidth / 2);
+            bonusButtonTexture.height = .177 * bonusButtonTexture.width;
+            bonusButtonTexture.alpha = 1;
+            bonusButtonTexture.x = (bonusDialWidth / 2) - (bonusButtonTexture.width / 2)
+            bonusButtonTexture.y = (bonusDialHeight / 100) * 85;
+
+            bonusButtonTexture.interactive = true;
+            bonusButtonTexture.buttonMode = true;
+            bonusButtonTexture.addListener('pointerdown', () => {
+                bonusButtonTexture.texture = PIXI.Texture.from('continue3.png');    
+            });
+            bonusButtonTexture.addListener('pointerup', () => {
+                bonusButtonTexture.texture = PIXI.Texture.from('continue2.png');
+                closeBonusDialogue();
+            });
+            bonusButtonTexture.addListener('mouseover', () => {
+                bonusButtonTexture.texture = PIXI.Texture.from('continue2.png');    
+            });
+            bonusButtonTexture.addListener('mouseout', () => {
+                bonusButtonTexture.texture = PIXI.Texture.from('continue1.png');    
+            });
+            bonusDialContainer.addChild(bonusButtonTexture);
+
+//#endregion
+
+//#region bonus complete dialogue
+            const bonusCompContainer = new PIXI.Container();
+            bonusCompContainer.position.x = (app.stage.width / 2) - (bonusDialWidth / 2);
+            bonusCompContainer.position.y = (app.stage.height / 2) - (bonusDialHeight / 2);
+           
+            var bonusCompMenu = new PIXI.Sprite(PIXI.Texture.from('bonusWin.png'));
+            bonusCompMenu.width = bonusDialWidth;
+            bonusCompMenu.height = bonusDialWidth * .52;
+            bonusCompContainer.addChild(bonusCompMenu);
+            let totalWinText = new PIXI.Text(formatMoney(12000000), banner_style);
+            totalWinText.x = (bonusCompMenu.width/2) - (totalWinText.width/2);
+            totalWinText.y = (bonusCompMenu.height/2) - (totalWinText.height/2);
+            bonusCompContainer.addChild(totalWinText);
+            bonusCompContainer.alpha = .99;
+            bonusCompContainer.visible = false;
+
+            app.stage.addChild(bonusCompContainer);
+            
+            function openBonusComp(winAmount) {
+                totalWinText.text = formatMoney(winAmount);
+                totalWinText.x = (bonusCompMenu.width/2) - (totalWinText.width/2);
+                totalWinText.y = (bonusCompMenu.height/2) - (totalWinText.height/2);
+                bonusCompContainer.visible = true;
+                bonusCompContainer.alpha = 0;
+                bonusWin = 0;
+                if (skipScreens) {
+                    tweenTo(bonusCompContainer, 'alpha', .99, 1500, backout(0), null, closeBonusCompDialogue);
+                } else {
+                    tweenTo(bonusCompContainer, 'alpha', .99, 1500, backout(0), null, null);
+                }
+            }
+            
+            function closeBonusCompDialogue() {
+                if (bonusCompContainer.visible) {
+                    bonusCompContainer.visible = false;
+                    bonusWinText.text = '';
+                    bonusSpinsText.text = '';
+                    autoTexture.texture = PIXI.Texture.from('auto1.png');
+                    autoTexture.visible = true;
+                    spinTexture.visible = true;
+                    updateBalance();
+                    bonusBg.visible = false;
+                    if (musicEnabled && soundEnabled) {
+                        tweenTo(music, "volume", 1, 4000, backout(0), null, null);
+                        tweenTo(music2, "volume", 0, 4000, backout(0), null, null);
+                    }
+                    if (skipScreens) {
+                        autoTexture.texture = PIXI.Texture.from('auto4.png');
+                        autoplay = true;
+                        startPlay();
+                    }
+                }
+            }
+
+            var bonusCompButton = new PIXI.Sprite(PIXI.Texture.from('continue1.png'));
+            bonusCompButton.width = (bonusDialWidth / 5) * 2;
+            bonusCompButton.height = .177 * bonusCompButton.width;
+            bonusCompButton.alpha = 1;
+            bonusCompButton.x = (bonusCompMenu.width / 2) - (bonusCompButton.width / 2);
+            bonusCompButton.y = (bonusCompMenu.height / 100) * 78;
+
+            bonusCompButton.interactive = true;
+            bonusCompButton.buttonMode = true;
+            bonusCompButton.addListener('pointerdown', () => {
+                bonusCompButton.texture = PIXI.Texture.from('continue3.png');    
+            });
+            bonusCompButton.addListener('pointerup', () => {
+                bonusCompButton.texture = PIXI.Texture.from('continue2.png');
+                closeBonusCompDialogue();
+            });
+            bonusCompButton.addListener('mouseover', () => {
+                bonusCompButton.texture = PIXI.Texture.from('continue2.png');    
+            });
+            bonusCompButton.addListener('mouseout', () => {
+                bonusCompButton.texture = PIXI.Texture.from('continue1.png');    
+            });
+            bonusCompContainer.addChild(bonusCompButton);
+
+//#endregion
+
+//#region bonus calc
+            function clearBonusSymbols() {
+                bonusSymbols = [];
+            }
+            function checkBonus() {
+                bonusCount = 0;
+                for (let i = 0; i < 5; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (currentSymbols[i][j] == 8 && !wildLocations.includes(i.toString() + j.toString())) {
+                            bonusCount++;
+                        }
+                    }
+                }
+                let spinsWon = 0;
+                if (bonusCount == 3) {
+                    if (bonusSpins > 0 || lastSpin) {
+                        numRetrig++;
+                        spinsWon += 3;
+                    } else {
+                        spinsWon += 8;
+                    }
+                }
+                if (bonusCount == 4) {
+                    if (bonusSpins > 0 || lastSpin) {
+                        numRetrig++;
+                        spinsWon += 4;
+                    } else {
+                        spinsWon += 10;
+                    }
+                }
+                if (bonusCount >= 5) {
+                    if (bonusSpins > 0 || lastSpin) {
+                        numRetrig++;
+                        spinsWon += 5;
+                    } else {
+                        spinsWon += 12;
+                    }
+                }
+                bonusSpins += spinsWon;
+                if (bonusCount >= 3) {
+                    numBonus++;
+                    for (let i = 0; i < bonusSymbols.length; i++) {
+                        if (bonusSymbols[i].texture != slotTextures[8]) {
+                            continue;
+                        }
+                        let time = 1000;
+                        if (fastSpin) {
+                            time = 100;
+                        }
+                        tweenTo(bonusSymbols[i].scale, 'x', bonusSymbols[i].scale.x + .0001, time, backout(500), null, null);
+                        tweenTo(bonusSymbols[i].scale, 'y', bonusSymbols[i].scale.y + .0001, time, backout(500), null, null);
+                        tweenTo(bonusSymbols[i].position, 'x', bonusSymbols[i].position.x - 1, time, backout(35), null, null);
+                        tweenTo(bonusSymbols[i].position, 'y', bonusSymbols[i].position.y - 1, time, backout(35), null, animComplete);
+                        numAnimRunning++;
+                    }
+                }
+                if (bonusCount < 3) {
+                    animComplete(from_anim = false);
+                } else {
+                    updateBonusSpins();
+                    openBonusDialogue(spinsWon);
+                }
+                clearBonusSymbols();
+            }
+
+            let wildLocations = []
+            let stickySymbols = []
+
+            function clearStickySymbols() {
+                for (let i = 0; i < stickySymbols.length; i++) {
+                        reelContainer.removeChild(stickySymbols[i]);
+                    }
+                    stickySymbols = [];
+                    wildLocations = [];
+            }
+
+            function handleStickySymbols() {
+                if (bonusSpins > 0) {
+                    for (let i = 0; i < 5; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            if (currentSymbols[i][j] == 9 && !wildLocations.includes(i.toString() + j.toString())) {
+                                playWild();
+                                wildLocations.push(i.toString() + j.toString());
+
+                                const symbol = new PIXI.Sprite(slotTextures[9]);
+                                
+                                // Scale the symbol to fit symbol area.
+                                symbol.y = (2 - j) * SYMBOL_SIZE - (x_margin /2);
+                                symbol.width = SYMBOL_SIZE + x_margin;
+                                symbol.height = SYMBOL_SIZE + x_margin;
+                                //symbol.scale.x = symbol.scale.y = Math.min(SYMBOL_SIZE / symbol.width, SYMBOL_SIZE / symbol.height);
+                                symbol.x = (SYMBOL_SIZE * i) + (reel_gap * i) + (x_margin * i) + x_margin/2;
+                                
+                                stickySymbols.push(symbol);
+                                reelContainer.addChild(symbol);
+                                
+                            }
+                        }
+                    }
+                }
+            }
+//#endregion
+
+//#region win calc
+            let bonusWin = 0;
+
+            // If you are reading this code, I apologize for this demonic function.
+            // It is likely unintelligible to anyone but me.
+            function calculateWin() {
+                playReelComplete();
+                totalWin = 0;
+                highestCount = 0;
+
+                for (let line = 0; line < lines.length; line++) {
+                    let curr = currentSymbols[0][lines[line][0]];
+                    if (wildLocations.includes("0" + lines[line][0].toString())) {
+                        curr = 9;
+                    }
+                    if(curr == 8) {
+                        continue;
+                    }
+                    let count = 0;
+                    let wilds = 0;
+                    for (let pos = 1; pos < 5; pos++) {
+                        if (curr == currentSymbols[pos][lines[line][pos]] ||
+                            curr == 9 ||
+                            currentSymbols[pos][lines[line][pos]] == 9 ||
+                            wildLocations.includes(pos.toString() + lines[line][pos].toString())) {
+                            if (currentSymbols[pos][lines[line][pos]] == 8 && 
+                                !wildLocations.includes(pos.toString() + lines[line][pos].toString())) {
+                                break;
+                            }
+                            if (currentSymbols[pos][lines[line][pos]] == 9 || 
+                                wildLocations.includes(pos.toString() + lines[line][pos].toString())) {
+                                wilds++;
+                            }
+                            if (curr == 9) {
+                                wilds++;
+                                if (!wildLocations.includes(pos.toString() + lines[line][pos].toString())) {
+                                    curr = currentSymbols[pos][lines[line][pos]];
+                                }
+                            }
+                            count++;
+                            var start_line_pos = lines[line][pos - 1];
+                            var start_x = ((pos - 1) * REEL_WIDTH) + (REEL_WIDTH / 2);
+                            var start_y = ((start_line_pos) * SYMBOL_SIZE) + (SYMBOL_SIZE / 2);
+                            start_y = (SYMBOL_SIZE * 3) - start_y;
+                            lineGraphics.lineStyle(2, lineColors[line]);
+                            lineGraphics.beginFill(lineColors[line]);
+                            lineGraphics.drawCircle(start_x, start_y, 7);
+                            lineGraphics.endFill();
+
+                            var end_line_pos = lines[line][pos];
+                            var end_x = ((pos) * REEL_WIDTH) + (REEL_WIDTH / 2);
+                            var end_y = ((end_line_pos) * SYMBOL_SIZE) + (SYMBOL_SIZE / 2);
+                            end_y = (SYMBOL_SIZE * 3) - end_y;
+                            lineGraphics.beginFill(lineColors[line]);
+                            lineGraphics.drawCircle(end_x, end_y, 7);
+                            lineGraphics.endFill();
+
+                            lineGraphics.lineStyle(5, lineColors[line])
+                                        .moveTo(start_x, start_y)
+                                        .lineTo(end_x, end_y);
+
+                            var animTime = 500;
+                            if(bonusSpins > 0 || lastSpin) {
+                                animTime = 1500;
+                            }
+                            if(fastSpin) {
+                                animTime = 400;
+                            }
+                            lineGraphics.scale.x = 1;
+                            lineGraphics.scale.y = 1;
+
+                            numAnimRunning++;
+                            tweenTo(lineGraphics.scale, 'x', lineGraphics.scale.x + .0002, animTime, backout(500), null, null);
+                            tweenTo(lineGraphics.scale, 'y', lineGraphics.scale.y + .0002, animTime, backout(500), null, animComplete);
+                        } else {
+                            break;
+                        }
+                    }
+                    // add one more to count since we started counting at second column.
+                    if (count > 0) {
+                        if (wilds > count){
+                            wilds = count;
+                        }
+                        count++;
+                    }
+                    if (count > highestCount) {
+                        highestCount = count;
+                    }
+                    let win = pays[curr] * count * count * count;
+                    for (let i = 0; i < wilds; i++){
+                        win = win * 2;
+                    }
+                    
+                    totalWin += win;
+
+                }
+                if (totalWin > 0) {
+                    if (totalWin > betSize * 75) {
+                        numHuge++;
+                        playHuge();
+                        coinRain();
+                        displayBigWinCount(totalWin, 12000);
+                    } else if (totalWin > betSize * 25) {
+                        playBig();
+                        playSplash();
+                        coinSplash(4000);
+                        displayBigWinCount(totalWin, 1500);
+                    } else if (totalWin > betSize * 1) {
+                        playSmall();
+                    } else {
+                        playMin();
+                    }
+
+                    winText.text = "Win " + formatMoney(totalWin);
+                    winText.x = Math.round((bottom.width / 2) - (winText.width / 2));
+                    if (bonusSpins > 0 || lastSpin) {
+                        bonusWin += totalWin;
+                        updateBonusWinText();
+                    } else {
+                        balance += totalWin;
+                        updateBalance();
+                    }
+                    
+                }
+                checkBonus();
+                handleStickySymbols();
+                if (bonusSpins == 0 && lastSpin) {
+                    bonusComplete();
+                }
+                
+            }
+//#endregion
+
+//#region completion functions
+            function bonusComplete() {
+                autoplay = false;
+                lastSpin = false;
+                balance += bonusWin;
+                openBonusComp(bonusWin);
+            }
+
+            function animComplete(from_anim = true) {
+                if (from_anim) {
+                    numAnimRunning--;
+                }
+                if (numAnimRunning == 0 && coinsAnimating == 0 && soundTracker.playingHuge == 0) {
+                    running = false;
+                }
+                if (autoplay) {
+                    startPlay();
+                }
+            }
+
+            function reelsComplete() {
+                calculateWin();
+                stopTease();
+                if (autoplay) {
+                    startPlay();
+                }
+            }
+//#endregion
+
+//#region keyboard
+            function onKeyDown(key) {
+                if (key.key == ' ') {
+                    startPlay();
+                }
+                if (key.key == 'm') {
+                    mutePressed();
+                }
+            }
+            document.addEventListener('keydown', onKeyDown);
+
+//#endregion
+
+//#region animation
+
+            let currentSymbols = []
+            for (let i = 0; i < reels.length; i++) {
+                currentSymbols.push([-1,-1,-1,-1])
+            }
+
+            function getNextSymbol(reel) {
+                let toReturn = reelPool[Math.floor(Math.random() * reelPool.length)];
+                currentSymbols[reel].push(toReturn);
+                currentSymbols[reel].shift();
+                return toReturn;
+            }
+
+            let bonusSymbols = [];
+
+            app.ticker.add((delta) => {
+                for (let i = 0; i < reels.length; i++) {
+                    const r = reels[i];
+                    r.blur.blurY = (r.position - r.previousPosition) * 40;
+                    r.previousPosition = r.position;
+                    let r_speed = .5;
+                    if (i == 0 && spinning.reel0 > 0) {
+                        r.position += (r_speed * delta);
+                    }
+                    if (i == 1 && spinning.reel1 > 0) {
+                        r.position += (r_speed * delta);
+                    }
+                    if (i == 2 && spinning.reel2 > 0) {
+                        r.position += (r_speed * delta);
+                    }
+                    if (i == 3 && spinning.reel3 > 0) {
+                        r.position += (r_speed * delta);
+                    }
+                    if (i == 4 && spinning.reel4 > 0) {
+                        r.position += (r_speed * delta);
+                    }
+
+                    for (let j = 0; j < r.symbols.length; j++) {
+
+                        const s = r.symbols[j];
+                        const prevy = s.y;
+                        
+                        s.y = ((r.position + j) % r.symbols.length) * SYMBOL_SIZE - SYMBOL_SIZE;
+                        if (s.y < 0 && prevy > SYMBOL_SIZE) {
+                            let nextSymbol = getNextSymbol(i);
+
+                            s.texture = slotTextures[nextSymbol];
+                            s.scale.x = s.scale.y = Math.min(SYMBOL_SIZE / s.texture.width, SYMBOL_SIZE / s.texture.height);
+                            s.x = Math.round((SYMBOL_SIZE - s.width) / 2);
+                            if (nextSymbol == 8) {
+                                bonusSymbols.push(s);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        const tweening = [];
+        function tweenTo(object, property, target, time, easing, onchange, oncomplete) {
+            const tween = {
+                object,
+                property,
+                propertyBeginValue: object[property],
+                target,
+                easing,
+                time,
+                change: onchange,
+                complete: oncomplete,
+                start: Date.now(),
+            };
+
+            tweening.push(tween);
+            return tween;
+        }
+        // Listen for animate update.
+        app.ticker.add((delta) => {
+            const now = Date.now();
+            const remove = [];
+            for (let i = 0; i < tweening.length; i++) {
+                const t = tweening[i];
+                const phase = Math.min(1, (now - t.start) / t.time);
+
+                t.object[t.property] = lerp(t.propertyBeginValue, t.target, t.easing(phase));
+                if (t.change) t.change(t);
+                if (phase === 1) {
+                    t.object[t.property] = t.target;
+                    if (t.complete) t.complete(t);
+                    remove.push(t);
+                }
+            }
+            for (let i = 0; i < remove.length; i++) {
+                tweening.splice(tweening.indexOf(remove[i]), 1);
+            }
+        });
+
+        // Basic lerp funtion.
+        function lerp(a1, a2, t) {
+            return a1 * (1 - t) + a2 * t;
+        }
+
+        // Backout function from tweenjs.
+        // https://github.com/CreateJS/TweenJS/blob/master/src/tweenjs/Ease.js
+        function backout(amount) {
+            return (t) => (--t * t * ((amount + 1) * t + amount) + 1);
+        }
+
+    //#endregion
+    </script>
+    </div>
+    <script type="module">
+        
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.5/firebase-app.js";
+        import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/9.6.5/firebase-analytics.js";
+        
+        const firebaseConfig = {
+          apiKey: "AIzaSyCYg-_iAdq5xCu0ocJqGpUhhM0C8T4w6gU",
+          authDomain: "trainslot-dd098.firebaseapp.com",
+          projectId: "trainslot-dd098",
+          storageBucket: "trainslot-dd098.appspot.com",
+          messagingSenderId: "1001120825209",
+          appId: "1:1001120825209:web:f665fbbed8c6534a75b9a8",
+          measurementId: "G-G03DM6BWG0"
+        };
+      
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+    </script>
+</body>
+
+</html>
